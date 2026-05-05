@@ -91,10 +91,14 @@ export async function sendMessageToSocrates(
     return data.text;
   } catch (error: any) {
     console.error("Error communicating with Gemini:", error);
-    if (error.message.includes("429") || error.message.includes("quota")) {
-      return "소크라테스: 오, 나의 친구여. 지금은 너무 많은 이들이 나를 찾고 있어 잠시 쉼이 필요하구먼. (사용량 초과)";
+    
+    const detailedError = error.message ? `: ${error.message}` : "";
+    
+    if (error.message?.includes("429") || error.message?.includes("quota")) {
+      return `소크라테스: 오, 나의 친구여. 지금은 너무 많은 이들이 나를 찾고 있어 잠시 쉼이 필요하구먼. (사용량 초과${detailedError})`;
     }
-    return "소크라테스: 오, 신들이시여. 나의 생각이 꼬여버렸네. 다시 한번 말해주겠나?";
+    
+    return `소크라테스: 오, 신들이시여. 나의 생각이 조금 어지럽구먼. (상세 오류${detailedError})`;
   }
 }
 

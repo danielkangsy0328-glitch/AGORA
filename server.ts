@@ -11,6 +11,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const apiKey = process.env.GEMINI_API_KEY;
+
+if (!apiKey) {
+  console.error("CRITICAL: GEMINI_API_KEY is not set in environment variables!");
+}
+
 const ai = new GoogleGenAI({ apiKey: apiKey || "" });
 
 async function startServer() {
@@ -28,6 +33,10 @@ async function startServer() {
   // Gemini API Proxy Routes
   app.post("/api/gemini/chat", async (req, res) => {
     try {
+      if (!apiKey) {
+        return res.status(500).json({ error: "GEMINI_API_KEY가 서버에 설정되지 않았습니다. 배포 환경의 환경 변수를 확인해 주세요." });
+      }
+
       const { history, userInput, difficulty, topic } = req.body;
 
       const systemInstruction = `
@@ -67,11 +76,17 @@ async function startServer() {
     try {
       const { history, topic } = req.body;
 
+      const getMessageContent = (m: any) => {
+        if (m.content) return m.content;
+        if (m.parts && m.parts[0] && m.parts[0].text) return m.parts[0].text;
+        return "";
+      };
+
       const prompt = `당신은 대화를 분석하여 철학적 성취도를 측정하는 인공지능 소크라테스입니다.
         아래 대화 기록을 분석하고 주제("${topic}")와 맥락을 파악하여 평가 결과를 JSON으로 생성해 주게.
         
         대화 기록:
-        ${history.map((m: any) => `${m.role === "model" ? "소크라테스" : "사용자"}: ${m.content}`).join("\n")}
+        ${history.map((m: any) => `${m.role === "model" ? "소크라테스" : "사용자"}: ${getMessageContent(m)}`).join("\n")}
 
         반드시 다음 JSON 형식으로만 답하게:
         {
@@ -96,7 +111,8 @@ async function startServer() {
         },
       });
 
-      res.json(JSON.parse(result.text || "{}"));
+      const cleanJson = (result.text || "{}").replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(cleanJson));
     } catch (error: any) {
       console.error("Gemini Evaluate Error:", error);
       res.status(500).json({ error: error.message });
@@ -163,11 +179,17 @@ async function startServer() {
     try {
       const { history, topic } = req.body;
 
+      const getMessageContent = (m: any) => {
+        if (m.content) return m.content;
+        if (m.parts && m.parts[0] && m.parts[0].text) return m.parts[0].text;
+        return "";
+      };
+
       const prompt = `학생의 탐구 보고서 작성을 돕는 교육 전문 소크라테스입니다. 
         주제("${topic}")를 바탕으로 가이드라인을 JSON으로 제공하세요.
         
         대화 기록:
-        ${history.map((m: any) => `${m.role === "model" ? "소크라테스" : "사용자"}: ${m.content}`).join("\n")}
+        ${history.map((m: any) => `${m.role === "model" ? "소크라테스" : "사용자"}: ${getMessageContent(m)}`).join("\n")}
 
         형식:
         {
@@ -187,7 +209,8 @@ async function startServer() {
         },
       });
 
-      res.json(JSON.parse(result.text || "{}"));
+      const cleanJson = (result.text || "{}").replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(cleanJson));
     } catch (error: any) {
       console.error("Gemini Report Guide Error:", error);
       res.status(500).json({ error: error.message });
