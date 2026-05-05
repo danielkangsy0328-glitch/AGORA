@@ -1,0 +1,122 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Noto+Serif:ital,wght@0,100..900;1,100..900&family=Work+Sans:ital,wght@0,100..900;1,100..900&family=Noto+Serif+KR:wght@200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-25..0');
+
+@theme {
+  --color-surface: #fcf9f8;
+  --color-surface-dim: #dcd9d9;
+  --color-surface-bright: #fcf9f8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f6f3f2;
+  --color-surface-container: #f0eded;
+  --color-surface-container-high: #eae7e7;
+  --color-surface-container-highest: #e4e2e1;
+  --color-on-surface: #1b1c1c;
+  --color-on-surface-variant: #464840;
+  --color-inverse-surface: #303030;
+  --color-inverse-on-surface: #f3f0f0;
+  --color-outline: #76786f;
+  --color-outline-variant: #c6c7bd;
+  --color-surface-tint: #59614b;
+  --color-primary: #28301c;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #3e4631;
+  --color-on-primary-container: #abb499;
+  --color-inverse-primary: #c1caae;
+  --color-secondary: #7c5730;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #fdcb9b;
+  --color-on-secondary-container: #79542d;
+  --color-tertiary: #2d2d27;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #44433d;
+  --color-on-tertiary-container: #b2b0a8;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-primary-fixed: #dde6c9;
+  --color-primary-fixed-dim: #c1caae;
+  --color-on-primary-fixed: #171e0c;
+  --color-on-primary-fixed-variant: #424a34;
+  --color-secondary-fixed: #ffdcbd;
+  --color-secondary-fixed-dim: #eebd8e;
+  --color-on-secondary-fixed: #2c1600;
+  --color-on-secondary-fixed-variant: #61401b;
+  --color-tertiary-fixed: #e5e2da;
+  --color-tertiary-fixed-dim: #c9c6be;
+  --color-on-tertiary-fixed: #1c1c17;
+  --color-on-tertiary-fixed-variant: #474741;
+  --color-background: #f5eedc;
+  --color-on-background: #2c2921;
+  --color-surface-variant: #ece2c6;
+
+  --font-headline: "Newsreader", serif;
+  --font-body: "Noto Serif KR", "Noto Serif", serif;
+  --font-label: "Work Sans", sans-serif;
+
+  --font-size-body-lg: 18px;
+  --font-size-body-md: 16px;
+  --font-size-headline-xl: 32px;
+  --font-size-headline-lg: 26px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --font-size-body-lg: 24px;
+    --font-size-body-md: 22px;
+    --font-size-headline-xl: 64px;
+    --font-size-headline-lg: 48px;
+  }
+}
+
+body {
+  @apply bg-background text-on-surface font-body;
+  font-size: var(--font-size-body-md);
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+}
+
+.marble-bg {
+  background-color: #f5eedc;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    url('https://www.transparenttextures.com/patterns/natural-paper.png');
+  background-attachment: fixed;
+}
+
+.parchment-texture {
+  background-image: url('https://www.transparenttextures.com/patterns/parchment.png');
+  background-color: #fcf6e8;
+}
+
+.chiseled-border {
+  border: 4px solid #282a1c;
+  box-shadow: inset 1px 1px 0px rgba(255,255,255,0.9), 4px 4px 0px rgba(0,0,0,0.25);
+}
+
+.writing-tablet {
+  background: linear-gradient(135deg, #e4e2e1 0%, #dcd9d9 100%);
+  border: 12px solid #2d2d27;
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+  .writing-tablet {
+    border-width: 6px;
+  }
+  
+  .chiseled-border {
+    border-width: 2px;
+    box-shadow: inset 1px 1px 0px rgba(255,255,255,0.9), 2px 2px 0px rgba(0,0,0,0.25);
+  }
+}
+
+.column-fluting {
+  background: repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0, 0, 0, 0.03) 10px, rgba(0, 0, 0, 0.03) 12px);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+

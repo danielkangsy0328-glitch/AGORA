@@ -1,0 +1,6 @@
+{
+  "name": "Agora",
+  "description": "A philosophical dialogue application using the Socratic method to explore deep existential questions with an AI Socrates.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["AI_CHAT", "DATA_VISUALIZATION"]
+}

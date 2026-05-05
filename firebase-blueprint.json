@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user basic information and preferences.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email"]
+    },
+    "Session": {
+      "title": "Philosophical Session",
+      "description": "A single philosophical dialogue session.",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "userId": { "type": "string" },
+        "topic": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["beginner", "intermediate", "advanced"] },
+        "mode": { "type": "string", "enum": ["dialogue", "debate"] },
+        "stance": { "type": "string", "enum": ["pro", "con"] },
+        "completed": { "type": "boolean" },
+        "evaluation": { "type": "object" },
+        "reportGuide": { "type": "object" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "topic"]
+    },
+    "Message": {
+      "title": "Dialogue Message",
+      "description": "A single message in a session.",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles by ID."
+    },
+    "sessions/{sessionId}": {
+      "schema": "Session",
+      "description": "Philosophical sessions."
+    },
+    "sessions": {
+      "schema": "Session",
+      "description": "Index of all sessions for history."
+    },
+    "conversations/{sessionId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Individual messages in a conversation."
+    }
+  }
+}
