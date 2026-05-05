@@ -6,8 +6,23 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const rootPath = process.cwd();
+const distPath = path.join(rootPath, "dist");
+
+console.log("--- Server Initialization ---");
+console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`Root Path: ${rootPath}`);
+console.log(`Dist Path: ${distPath}`);
+console.log("----------------------------");
+
+// Fallback for NODE_ENV
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = "production";
+}
+
+console.log(`Starting server in ${process.env.NODE_ENV} mode`);
+console.log(`Process CWD: ${rootPath}`);
+console.log(`Expected Dist Path: ${distPath}`);
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -226,7 +241,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     // In production, serve from dist directory
-    const distPath = __dirname;
+    console.log(`Serving static files from: ${distPath}`);
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
