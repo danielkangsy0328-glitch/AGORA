@@ -4,6 +4,8 @@ import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
 import "dotenv/config";
 
+console.log("SERVER.TS MODULE LOADED");
+
 // Environment-agnostic way to get __dirname
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -11,11 +13,19 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  console.log("Starting server process...");
+
   app.use(express.json());
+
+  // Logging middleware for all requests
+  app.use((req, res, next) => {
+    console.log(`[REQUEST] ${req.method} ${req.url}`);
+    next();
+  });
 
   // API endpoints
   let aiInstance: GoogleGenAI | null = null;
-  const MODEL_NAME = "gemini-2.0-flash"; // Using 2.0 Flash as it is modern and efficient
+  const MODEL_NAME = "gemini-1.5-flash"; // Using 1.5 Flash for broader compatibility
 
   function getAI(): GoogleGenAI {
     if (!aiInstance) {
@@ -34,12 +44,12 @@ async function startServer() {
     return aiInstance;
   }
 
-  app.get("/api/health", (req, res) => {
+  app.get("/app-api/health", (req, res) => {
     res.json({ status: "ok" });
   });
 
-  app.post("/api/gemini/chat", async (req, res) => {
-    console.log("POST /api/gemini/chat", req.body?.userInput?.substring(0, 50));
+  app.post("/app-api/gemini/chat", async (req, res) => {
+    console.log("POST /app-api/gemini/chat", req.body?.userInput?.substring(0, 50));
     try {
       const ai = getAI();
       const { history, userInput, difficulty, topic } = req.body;
@@ -74,8 +84,8 @@ async function startServer() {
     }
   });
 
-  app.post("/api/gemini/evaluate", async (req, res) => {
-    console.log("POST /api/gemini/evaluate", req.body?.topic);
+  app.post("/app-api/gemini/evaluate", async (req, res) => {
+    console.log("POST /app-api/gemini/evaluate", req.body?.topic);
     try {
       const ai = getAI();
       const { history, topic } = req.body;
@@ -122,8 +132,8 @@ async function startServer() {
     }
   });
 
-  app.post("/api/gemini/debate", async (req, res) => {
-    console.log("POST /api/gemini/debate", req.body?.topic);
+  app.post("/app-api/gemini/debate", async (req, res) => {
+    console.log("POST /app-api/gemini/debate", req.body?.topic);
     try {
       const ai = getAI();
       const { history, topic, userStance } = req.body;
@@ -150,8 +160,8 @@ async function startServer() {
     }
   });
 
-  app.post("/api/gemini/guide", async (req, res) => {
-    console.log("POST /api/gemini/guide", req.body?.userInput?.substring(0, 50));
+  app.post("/app-api/gemini/guide", async (req, res) => {
+    console.log("POST /app-api/gemini/guide", req.body?.userInput?.substring(0, 50));
     try {
       const ai = getAI();
       const { history, userInput, attachedDocs } = req.body;
@@ -175,8 +185,8 @@ async function startServer() {
     }
   });
 
-  app.post("/api/gemini/report-guide", async (req, res) => {
-    console.log("POST /api/gemini/report-guide", req.body?.topic);
+  app.post("/app-api/gemini/report-guide", async (req, res) => {
+    console.log("POST /app-api/gemini/report-guide", req.body?.topic);
     try {
       const ai = getAI();
       const { history, topic } = req.body;
@@ -221,8 +231,11 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server is listening on 0.0.0.0:${PORT}`);
+    console.log("Ready to handle requests.");
   });
 }
 
-startServer();
+startServer().catch(err => {
+  console.error("FAILED TO START SERVER:", err);
+});

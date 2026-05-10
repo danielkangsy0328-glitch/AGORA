@@ -57,7 +57,7 @@ export async function generateSocraticEvaluation(
   topic: string
 ): Promise<SocraticEvaluation> {
   try {
-    return await apiFetch('/api/gemini/evaluate', { history, topic });
+    return await apiFetch('/app-api/gemini/evaluate', { history, topic });
   } catch (error: any) {
     console.error("Evaluation generation error:", error);
     return {
@@ -80,7 +80,7 @@ export async function generateInquiryReportGuide(
   topic: string
 ): Promise<InquiryReportGuide> {
   try {
-    return await apiFetch('/api/gemini/report-guide', { history, topic });
+    return await apiFetch('/app-api/gemini/report-guide', { history, topic });
   } catch (error) {
     console.error("Report Guide generation error:", error);
     return {
@@ -100,7 +100,7 @@ export async function sendMessageToSocrates(
   topic: string
 ): Promise<string> {
   try {
-    const data = await apiFetch('/api/gemini/chat', { history, userInput, difficulty, topic });
+    const data = await apiFetch('/app-api/gemini/chat', { history, userInput, difficulty, topic });
     return data.text;
   } catch (error: any) {
     console.error("Error communicating with Gemini:", error);
@@ -114,7 +114,7 @@ export async function askSocratesGuide(
   attachedDocs?: string
 ): Promise<string> {
   try {
-    const data = await apiFetch('/api/gemini/guide', { history, userInput, attachedDocs });
+    const data = await apiFetch('/app-api/gemini/guide', { history, userInput, attachedDocs });
     return data.text;
   } catch (error: any) {
     console.error("Error communicating with Gemini Guide:", error);
@@ -128,7 +128,7 @@ export async function askSocratesDebate(
   userStance: 'pro' | 'con'
 ): Promise<string> {
   try {
-    const data = await apiFetch('/api/gemini/debate', { history, topic, userStance });
+    const data = await apiFetch('/app-api/gemini/debate', { history, topic, userStance });
     return data.text;
   } catch (error: any) {
     console.error("Error in Debate:", error);
