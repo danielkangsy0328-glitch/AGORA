@@ -53,7 +53,17 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
+    // Safety timeout: if auth takes more than 10 seconds, stop loading
+    // to at least allow the UI to try and render or show an error.
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn("Auth check timed out.");
+        setLoading(false);
+      }
+    }, 10000);
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
+      clearTimeout(timer);
       if (u) {
         setUser({ ...u }); // Spread to ensure fresh state
         if (currentScreen === 'login') setCurrentScreen('topic');
@@ -62,8 +72,16 @@ export default function App() {
         setCurrentScreen('login');
       }
       setLoading(false);
+    }, (error) => {
+      console.error("Auth Error:", error);
+      clearTimeout(timer);
+      setLoading(false);
+      setCurrentScreen('login');
     });
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
   }, [currentScreen]);
 
   const handleTopicSet = (selectedTopic: string) => {
