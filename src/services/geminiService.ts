@@ -106,7 +106,7 @@ export async function askSocratesGuide(
     return data.text;
   } catch (error: any) {
     console.error("Error communicating with Gemini Guide:", error);
-    return "소크라테스: 나의 영혼이 잠시 잠들었나 보군. 다시 한번 물어봐 주겠나?";
+    return `소크라테스: 나의 영혼이 잠시 잠들었나 보군. 다시 한번 물어봐 주겠나? (오류: ${error.message})`;
   }
 }
 
@@ -120,7 +120,7 @@ export async function askSocratesDebate(
     return data.text;
   } catch (error: any) {
     console.error("Error in Debate:", error);
-    return "소크라테스: 논쟁 중에 내 생각이 잠시 흩어졌구먼. 다시 말해주겠나?";
+    return `소크라테스: 논쟁 중에 내 생각이 잠시 흩어졌구먼. 다시 말해주겠나? (오류: ${error.message})`;
   }
 }
 

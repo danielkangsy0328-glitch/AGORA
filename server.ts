@@ -42,6 +42,13 @@ async function startServer() {
     try {
       const ai = getAI();
       const { history, userInput, difficulty, topic } = req.body;
+      
+      // Ensure history doesn't start with 'model' which Gemini API might reject
+      let validatedHistory = [...history];
+      if (validatedHistory.length > 0 && validatedHistory[0].role === 'model') {
+        validatedHistory.shift();
+      }
+
       const systemInstruction = `
         당신은 고대 그리스의 철학자 소크라테스입니다. 
         사용자와 "${topic}"이라는 주제에 대해 대화(산파술)를 나눕니다.
@@ -56,7 +63,7 @@ async function startServer() {
       `;
       const result = await ai.models.generateContent({
         model: MODEL_NAME,
-        contents: [...history, { role: "user", parts: [{ text: userInput }] }],
+        contents: [...validatedHistory, { role: "user", parts: [{ text: userInput }] }],
         config: { systemInstruction, temperature: 0.8 },
       });
       res.json({ text: result.text || "생각이 잠시 엉켰구먼." });
@@ -117,13 +124,20 @@ async function startServer() {
     try {
       const ai = getAI();
       const { history, topic, userStance } = req.body;
+
+      // Ensure history doesn't start with 'model' which Gemini API might reject
+      let validatedHistory = [...history];
+      if (validatedHistory.length > 0 && validatedHistory[0].role === 'model') {
+        validatedHistory.shift();
+      }
+
       const systemInstruction = `
         당신은 논쟁 중인 소크라테스입니다. 주제: "${topic}", 입장: ${userStance === 'pro' ? '찬성' : '반대'} 의견을 가진 사람의 논리를 부수는 역할입니다.
         상대의 논점에 대해 끝없는 질문을 던져 근거가 빈약함을 깨닫게 하세요.
       `;
       const result = await ai.models.generateContent({
         model: MODEL_NAME,
-        contents: history,
+        contents: validatedHistory,
         config: { systemInstruction, temperature: 0.8 },
       });
       res.json({ text: result.text || "논쟁이 잠시 멈췄구먼." });
@@ -137,10 +151,17 @@ async function startServer() {
     try {
       const ai = getAI();
       const { history, userInput, attachedDocs } = req.body;
+
+      // Ensure history doesn't start with 'model' which Gemini API might reject
+      let validatedHistory = [...history];
+      if (validatedHistory.length > 0 && validatedHistory[0].role === 'model') {
+        validatedHistory.shift();
+      }
+
       const systemInstruction = `당신은 학습 보조자 소크라테스입니다. 정답 대신 질문으로 유도하세요.`;
       const result = await ai.models.generateContent({
         model: MODEL_NAME,
-        contents: [...history, { role: "user", parts: [{ text: `${userInput}\n${attachedDocs || ""}` }] }],
+        contents: [...validatedHistory, { role: "user", parts: [{ text: `${userInput}\n${attachedDocs || ""}` }] }],
         config: { systemInstruction, temperature: 0.7 },
       });
       res.json({ text: result.text || "도움이 되지 못해 미안하네." });
