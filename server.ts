@@ -1,21 +1,181 @@
 import express from "express";
 import path from "path";
-import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { GoogleGenAI } from "@google/genai";
+import "dotenv/config";
 
-dotenv.config();
-
-// Fallback for NODE_ENV
+// Environment-agnostic way to get __dirname
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Middleware
   app.use(express.json());
 
-  // API routes
+  // API endpoints
+  let aiInstance: GoogleGenAI | null = null;
+  const MODEL_NAME = "gemini-2.0-flash"; // Using 2.0 Flash as it is modern and efficient
+
+  function getAI(): GoogleGenAI {
+    if (!aiInstance) {
+      const apiKey = process.env.GEMINI_API_KEY;
+      
+      if (!apiKey || apiKey.trim() === "" || apiKey === "undefined") {
+        console.error("GEMINI_API_KEY is missing or invalid in server environment.");
+        throw new Error("API key가 설정되지 않았습니다. AI Studio 설정에서 GEMINI_API_KEY를 확인해주세요.");
+      }
+      
+      // Basic validation: characters count or prefix if possible (optional diag)
+      console.log(`Initializing AI with key (length: ${apiKey.length})`);
+      
+      aiInstance = new GoogleGenAI({ apiKey: apiKey.trim() });
+    }
+    return aiInstance;
+  }
+
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", service: "Agora Philosophical Engine" });
+    res.json({ status: "ok" });
+  });
+
+  app.post("/api/gemini/chat", async (req, res) => {
+    try {
+      const ai = getAI();
+      const { history, userInput, difficulty, topic } = req.body;
+      const systemInstruction = `
+        당신은 고대 그리스의 철학자 소크라테스입니다. 
+        사용자와 "${topic}"이라는 주제에 대해 대화(산파술)를 나눕니다.
+        당신의 목표는 사용자에게 지식을 직접 전달하는 것이 아니라, 질문을 통해 사용자가 자신의 무지를 깨닫고 스스로 진리에 도달하도록 돕는 것입니다.
+        규칙:
+        1. 질문은 짧고 간결해야 합니다.
+        2. 사용자의 주장에 포함된 모순을 지적하거나 가정에 의문을 던지세요.
+        3. 친절하지만 비판적인 태도를 유지하세요.
+        4. "무지의 지"를 실천하도록 유도하세요.
+        5. 난이도(${difficulty})에 따라 대화의 깊이를 조절하세요.
+        6. 한국어로 대화하세요.
+      `;
+      const result = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: [...history, { role: "user", parts: [{ text: userInput }] }],
+        config: { systemInstruction, temperature: 0.8 },
+      });
+      res.json({ text: result.text || "생각이 잠시 엉켰구먼." });
+    } catch (error: any) {
+      console.error("Chat Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/gemini/evaluate", async (req, res) => {
+    try {
+      const ai = getAI();
+      const { history, topic } = req.body;
+      const getMessageContent = (m: any) => {
+        if (m.content) return m.content;
+        if (m.parts && m.parts[0]) return m.parts[0].text;
+        return "";
+      };
+
+      const dialogueText = history
+        .map((m: any) => `${m.role === 'user' ? '학생' : '소크라테스'}: ${getMessageContent(m)}`)
+        .join('\n');
+
+      const prompt = `다음은 주제 "${topic}"에 대한 소크라테스식 대화 내용입니다.
+        대화를 분석하여 학생의 사고 과정을 평가하고 아래 형식의 JSON으로만 출력하세요.
+        
+        대화 내용:
+        ${dialogueText}
+        
+        JSON 형식:
+        {
+          "scores": [
+            {"name": "초기 편향", "value": 0~100, "label": "PREFACE"},
+            {"name": "엘렌쿠스", "value": 0~100, "label": "ELENCHUS"},
+            {"name": "주제 심화", "value": 0~100, "label": "DERIVATION"},
+            {"name": "종합", "value": 0~100, "label": "SYNTHESIS"}
+          ],
+          "initialHypothesis": "학생의 초기 생각 요약",
+          "elenchusPoint": "모순이나 한계가 드러난 결정적 지점",
+          "reachedReason": "지식의 무지 또는 새로운 깨달음에 도달했는지 여부",
+          "keywords": ["키워드1", "키워드2", "키워드3"]
+        }`;
+      const result = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: { temperature: 0.1, responseMimeType: "application/json" },
+      });
+      const responseText = result.text || "{}";
+      const cleanJson = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(cleanJson));
+    } catch (error: any) {
+      console.error("Evaluate Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/gemini/debate", async (req, res) => {
+    try {
+      const ai = getAI();
+      const { history, topic, userStance } = req.body;
+      const systemInstruction = `
+        당신은 논쟁 중인 소크라테스입니다. 주제: "${topic}", 입장: ${userStance === 'pro' ? '찬성' : '반대'} 의견을 가진 사람의 논리를 부수는 역할입니다.
+        상대의 논점에 대해 끝없는 질문을 던져 근거가 빈약함을 깨닫게 하세요.
+      `;
+      const result = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: history,
+        config: { systemInstruction, temperature: 0.8 },
+      });
+      res.json({ text: result.text || "논쟁이 잠시 멈췄구먼." });
+    } catch (error: any) {
+      console.error("Debate Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/gemini/guide", async (req, res) => {
+    try {
+      const ai = getAI();
+      const { history, userInput, attachedDocs } = req.body;
+      const systemInstruction = `당신은 학습 보조자 소크라테스입니다. 정답 대신 질문으로 유도하세요.`;
+      const result = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: [...history, { role: "user", parts: [{ text: `${userInput}\n${attachedDocs || ""}` }] }],
+        config: { systemInstruction, temperature: 0.7 },
+      });
+      res.json({ text: result.text || "도움이 되지 못해 미안하네." });
+    } catch (error: any) {
+      console.error("Guide Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/gemini/report-guide", async (req, res) => {
+    try {
+      const ai = getAI();
+      const { history, topic } = req.body;
+      const prompt = `주제: ${topic}
+        위 주제에 대한 소크라테스식 대화 내용을 바탕으로 탐구 보고서 작성을 위한 가이드라인을 JSON으로 생성하세요.
+        형식:
+        {
+          "suggestedTitles": ["제목1", "제목2"],
+          "motivationPrompts": ["질문1", "질문2"],
+          "dialogueSummaryPoints": ["요약1", "요약2"],
+          "criticalThinkingPoints": ["관점1", "관점2"],
+          "futureInquiryQuestions": ["확장질문1", "확장질문2"]
+        }`;
+      const result = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: { temperature: 0.3, responseMimeType: "application/json" },
+      });
+      const responseText = result.text || "{}";
+      const cleanJson = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(cleanJson));
+    } catch (error: any) {
+      console.error("Report Guide Error:", error);
+      res.status(500).json({ error: error.message });
+    }
   });
 
   // Vite middleware for development
@@ -27,41 +187,12 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    // In production, serve static files from the dist directory
-    // If the server is bundled into dist/server.cjs, __dirname is the dist directory.
-    const distPath = path.resolve(__dirname);
-    const indexPath = path.join(distPath, "index.html");
-    
-    console.log(`[Production] Starting server...`);
-    console.log(`[Production] Current working directory: ${process.cwd()}`);
-    console.log(`[Production] __dirname: ${__dirname}`);
-    console.log(`[Production] Static assets path: ${distPath}`);
-    console.log(`[Production] Index file path: ${indexPath}`);
-
-    // Log incoming requests for assets to debug blank screen
-    app.use((req, res, next) => {
-      // Skip logging for health check to avoid noise
-      if (req.url === "/api/health") return next();
-      console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-      next();
-    });
-
-    // Serve static files from dist
+    const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));
-    
-    // SPA fallback: Serve index.html for any other route
-    app.get("*", (req, res) => {
-      // If the request looks like an asset that wasn't found, log it specifically
-      if (req.url.startsWith("/assets/")) {
-        console.warn(`[SPA Fallback WARNING] Asset not found in static middleware: ${req.url}. Serving index.html instead, which will likely cause a syntax error in the browser.`);
-      } else {
-        console.log(`[SPA Fallback] Serving index.html for: ${req.url}`);
-      }
-      res.sendFile(indexPath);
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-
-
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
