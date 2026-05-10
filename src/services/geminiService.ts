@@ -33,11 +33,23 @@ async function apiFetch(path: string, body: any) {
   });
   
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    const errorText = await response.text();
+    console.error(`API Error (${response.status}):`, errorText);
+    try {
+      const errorData = JSON.parse(errorText);
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    } catch (e) {
+      throw new Error(`서버 오류 (${response.status}): ${errorText.substring(0, 50)}...`);
+    }
   }
   
-  return response.json();
+  const responseText = await response.text();
+  try {
+    return JSON.parse(responseText);
+  } catch (e) {
+    console.error("JSON Parsing Error. Received:", responseText);
+    throw new Error(`응답 형식이 올바르지 않습니다: ${responseText.substring(0, 50)}...`);
+  }
 }
 
 export async function generateSocraticEvaluation(

@@ -20,14 +20,14 @@ async function startServer() {
   function getAI(): GoogleGenAI {
     if (!aiInstance) {
       const apiKey = process.env.GEMINI_API_KEY;
+      console.log("Checking GEMINI_API_KEY...");
       
       if (!apiKey || apiKey.trim() === "" || apiKey === "undefined") {
-        console.error("GEMINI_API_KEY is missing or invalid in server environment.");
-        throw new Error("API key가 설정되지 않았습니다. AI Studio 설정에서 GEMINI_API_KEY를 확인해주세요.");
+        console.error("CRITICAL: GEMINI_API_KEY is missing or invalid.");
+        throw new Error("API key가 설정되지 않았습니다. AI Studio 'Settings' 메뉴에서 GEMINI_API_KEY를 추가해주세요.");
       }
       
-      // Basic validation: characters count or prefix if possible (optional diag)
-      console.log(`Initializing AI with key (length: ${apiKey.length})`);
+      console.log(`GEMINI_API_KEY found (length: ${apiKey.length}, starts with: ${apiKey.substring(0, 4)}...)`);
       
       aiInstance = new GoogleGenAI({ apiKey: apiKey.trim() });
     }
@@ -39,6 +39,7 @@ async function startServer() {
   });
 
   app.post("/api/gemini/chat", async (req, res) => {
+    console.log("POST /api/gemini/chat", req.body?.userInput?.substring(0, 50));
     try {
       const ai = getAI();
       const { history, userInput, difficulty, topic } = req.body;
@@ -74,6 +75,7 @@ async function startServer() {
   });
 
   app.post("/api/gemini/evaluate", async (req, res) => {
+    console.log("POST /api/gemini/evaluate", req.body?.topic);
     try {
       const ai = getAI();
       const { history, topic } = req.body;
@@ -121,6 +123,7 @@ async function startServer() {
   });
 
   app.post("/api/gemini/debate", async (req, res) => {
+    console.log("POST /api/gemini/debate", req.body?.topic);
     try {
       const ai = getAI();
       const { history, topic, userStance } = req.body;
@@ -148,6 +151,7 @@ async function startServer() {
   });
 
   app.post("/api/gemini/guide", async (req, res) => {
+    console.log("POST /api/gemini/guide", req.body?.userInput?.substring(0, 50));
     try {
       const ai = getAI();
       const { history, userInput, attachedDocs } = req.body;
@@ -172,6 +176,7 @@ async function startServer() {
   });
 
   app.post("/api/gemini/report-guide", async (req, res) => {
+    console.log("POST /api/gemini/report-guide", req.body?.topic);
     try {
       const ai = getAI();
       const { history, topic } = req.body;
